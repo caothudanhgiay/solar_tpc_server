@@ -1,6 +1,7 @@
 package com.example.solar_tpc_server.exception;
 
 import com.example.solar_tpc_server.response.TsoApiResponse;
+import com.example.solar_tpc_server.util.TsoMessageUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,10 +24,16 @@ public class TsoGlobalExceptionHandler {
     public ResponseEntity<TsoApiResponse<Object>> handlingAppException(TsoAppException exception) {
         TsoErrorCode errorCode = exception.getErrorCode();
         
-        // Trả về TsoApiResponse bọc kèm theo message lấy từ enum TsoErrorCode
+        // Resolve error message from TsoMessageUtil
+        String resolvedMessage = TsoMessageUtil.getMessage("error." + errorCode.name().toLowerCase());
+        if (resolvedMessage.equals("error." + errorCode.name().toLowerCase())) {
+            resolvedMessage = errorCode.getMessage();
+        }
+        
+        // Trả về TsoApiResponse bọc kèm theo message lấy từ enum TsoErrorCode hoặc từ exception
         String message = exception.getMessage() != null && !exception.getMessage().equals(errorCode.getMessage()) 
                             ? exception.getMessage() 
-                            : errorCode.getMessage();
+                            : resolvedMessage;
                             
         TsoApiResponse<Object> apiResponse = TsoApiResponse.error(errorCode.getCode(), message);
 
@@ -47,7 +54,7 @@ public class TsoGlobalExceptionHandler {
 
         TsoApiResponse<Object> apiResponse = TsoApiResponse.<Object>builder()
                 .statusCode(400)
-                .message("Dữ liệu đầu vào không hợp lệ")
+                .message(TsoMessageUtil.getMessage("error.invalid_input"))
                 .data(errors)
                 .build();
 
@@ -62,10 +69,14 @@ public class TsoGlobalExceptionHandler {
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<TsoApiResponse<Object>> handlingRuntimeException(Exception exception) {
         TsoErrorCode errorCode = TsoErrorCode.INTERNAL_SERVER_ERROR;
+        String resolvedMessage = TsoMessageUtil.getMessage("error.internal_server_error");
+        if (resolvedMessage.equals("error.internal_server_error")) {
+            resolvedMessage = errorCode.getMessage();
+        }
         
         TsoApiResponse<Object> apiResponse = TsoApiResponse.error(
                 errorCode.getCode(), 
-                errorCode.getMessage() + ": " + exception.getMessage()
+                resolvedMessage + ": " + exception.getMessage()
         );
 
         return ResponseEntity
@@ -73,4 +84,5 @@ public class TsoGlobalExceptionHandler {
                 .body(apiResponse);
     }
 }
+
 

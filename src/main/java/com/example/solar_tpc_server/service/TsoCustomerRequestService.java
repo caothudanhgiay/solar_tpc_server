@@ -27,4 +27,10 @@ public class TsoCustomerRequestService {
         request.setUpdatedDate(null);
         repository.save(request);
     }
+
+    public boolean isSpamRequest(String phone) {
+        return repository.findTopByCustomerPhoneOrderByCreatedDateDesc(phone)
+                .map(lastRequest -> lastRequest.getCreatedDate().plusMinutes(10).isAfter(java.time.LocalDateTime.now()))
+                .orElse(false);
+    }
 }

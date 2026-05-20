@@ -31,6 +31,7 @@ public class TsoSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/menus").permitAll() // Cho phép truy cập công khai API lấy menu
+                .requestMatchers("/api/customer-requests").permitAll() // Cho phép truy cập công khai gửi yêu cầu
                 .anyRequest().authenticated() // Tất cả các request khác cần xác thực
             );
 
@@ -51,7 +52,7 @@ public class TsoSecurityConfig {
         String allowedOrigins = PropertyUtils.getProperty("app.cors.allowed-origins", "http://localhost:3000");
         configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(","))); 
         configuration.setAllowedMethods(methods);
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "Accept-Language"));
         configuration.setAllowCredentials(true); // Cho phép gửi kèm cookie/credentials nếu cần
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
