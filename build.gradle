@@ -25,6 +25,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
+    // Actuator để thu thập thông tin giám sát
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // Spring Boot 4.0 OpenTelemetry Starter (bao gồm micrometer-tracing-bridge-otel + OTel SDK)
+    implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
+    // Zipkin Exporter - gửi trace tới Zipkin server qua /api/v2/spans
+    implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
+
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'

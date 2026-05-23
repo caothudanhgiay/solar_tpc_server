@@ -14,6 +14,7 @@ public enum TsoErrorCode {
     FORBIDDEN(403, "Bạn không có quyền truy cập chức năng này (Forbidden)"),
     NOT_FOUND(404, "Không tìm thấy tài nguyên yêu cầu (Not Found)"),
     USER_NOT_EXISTED(404, "Tài khoản người dùng không tồn tại"),
+    INVALID_CREDENTIALS(401, "Tài khoản hoặc mật khẩu không chính xác"),
     
     // Nhóm 5xx - Lỗi từ phía Server
     INTERNAL_SERVER_ERROR(500, "Lỗi hệ thống không xác định (Internal Server Error)"),
