@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class TsoCustomerRequestService {
 
     private final TsoCustomerRequestRepository repository;
+    private final TsoEmailService emailService;
 
     public void saveCustomerRequest(TsoCustomerRequestDto requestDto) {
         TsoCustomerRequest request = new TsoCustomerRequest();
@@ -26,6 +27,9 @@ public class TsoCustomerRequestService {
         request.setCreatedDate(TSODateUtil.datetimeNow());
         request.setUpdatedDate(null);
         repository.save(request);
+
+        // Gửi email thông báo cho khách hàng (async, không block HTTP response)
+        emailService.sendCustomerRequestNotify(requestDto);
     }
 
     public boolean isSpamRequest(String phone) {

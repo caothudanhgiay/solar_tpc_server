@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Xác nhận yêu cầu tư vấn – Solar TPC Group</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Arial, sans-serif; color: #333; }
+        .wrapper { max-width: 620px; margin: 32px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header { background: linear-gradient(135deg, #ff8c00 0%, #e85d04 100%); padding: 36px 40px 28px; text-align: center; }
+        .header h1 { color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; margin-top: 16px; }
+        .header p { color: rgba(255,255,255,0.85); font-size: 14px; margin-top: 6px; }
+        .body { padding: 36px 40px; }
+        .greeting { font-size: 16px; color: #222; margin-bottom: 16px; }
+        .greeting strong { color: #e85d04; }
+        .info-box { background: #fff8f0; border-left: 4px solid #ff8c00; border-radius: 0 8px 8px 0; padding: 20px 24px; margin: 24px 0; }
+        .info-box h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 14px; }
+        .info-row { display: flex; margin-bottom: 10px; font-size: 14px; }
+        .info-label { width: 140px; flex-shrink: 0; color: #666; font-weight: 600; }
+        .info-value { color: #333; word-break: break-word; }
+        .divider { border: none; border-top: 1px solid #f0f0f0; margin: 28px 0; }
+        .message-text { font-size: 14px; color: #555; line-height: 1.7; }
+        .highlight { color: #e85d04; font-weight: 600; }
+        .footer { background: #fafafa; border-top: 1px solid #f0f0f0; padding: 28px 40px; text-align: center; }
+        .signature-logo { margin-bottom: 12px; }
+        .signature-logo img { height: 48px; }
+        .footer-name { font-size: 15px; font-weight: 700; color: #e85d04; margin-bottom: 4px; }
+        .footer-sub { font-size: 12px; color: #999; line-height: 1.6; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Xác nhận yêu cầu tư vấn</h1>
+        <p>Solar TPC Group – Năng lượng mặt trời cho tương lai</p>
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+        <p class="greeting">
+            Xin chào <strong th:text="${customerName}">Quý khách</strong>,
+        </p>
+        <p class="message-text" style="margin-top: 12px;">
+            Chúng tôi đã nhận được yêu cầu tư vấn của bạn. Đội ngũ chuyên gia của
+            <span class="highlight">Solar TPC Group</span> sẽ liên hệ lại với bạn trong thời gian sớm nhất!
+        </p>
+
+        <!-- Thông tin khách hàng -->
+        <div class="info-box">
+            <h3>Thông tin yêu cầu</h3>
+            <div class="info-row">
+                <span class="info-label">Họ và tên:</span>
+                <span class="info-value" th:text="${customerName}">–</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Số điện thoại:</span>
+                <span class="info-value" th:text="${customerPhone}">–</span>
+            </div>
+            <div class="info-row" th:if="${customerEmail != null and !#strings.isEmpty(customerEmail)}">
+                <span class="info-label">Email:</span>
+                <span class="info-value" th:text="${customerEmail}">–</span>
+            </div>
+            <div class="info-row" th:if="${customerAddress != null and !#strings.isEmpty(customerAddress)}">
+                <span class="info-label">Địa chỉ:</span>
+                <span class="info-value" th:text="${customerAddress}">–</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Nội dung:</span>
+                <span class="info-value" th:text="${requestContent}">–</span>
+            </div>
+        </div>
+
+        <hr class="divider"/>
+
+        <p class="message-text">
+            Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi qua email hoặc số điện thoại được cung cấp trên website.
+        </p>
+    </div>
+
+    <!-- FOOTER / CHỮ KÝ -->
+    <div class="footer">
+        <div class="signature-logo">
+            <!-- logo_tpc.png được đính kèm inline với Content-ID "logo_tpc" -->
+            <img th:src="'cid:logo_tpc'" alt="Solar TPC Group Logo"/>
+        </div>
+        <div class="footer-name">Solar TPC Group</div>
+        <div class="footer-sub">
+            Giải pháp điện mặt trời toàn diện<br/>
+            Email: solar.tpcgr@gmail.com &nbsp;|&nbsp; Website: solartpcgroup.vn
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -19,6 +19,10 @@ repositories {
 }
 
 dependencies {
+    // Email: JavaMailSender để gửi mail SMTP
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    // Thymeleaf: render HTML template cho email
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'

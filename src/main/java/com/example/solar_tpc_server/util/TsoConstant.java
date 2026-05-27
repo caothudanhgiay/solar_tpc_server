@@ -8,4 +8,9 @@ public final class TsoConstant {
     }
 
     public static final String SYSTEM = "SYSTEM";
+
+    // Languages
+    public static final String LANG_VI = "vi";
+    public static final String LANG_EN = "en";
+
 }
