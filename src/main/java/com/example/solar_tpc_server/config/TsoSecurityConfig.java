@@ -64,6 +64,7 @@ public class TsoSecurityConfig {
                 .requestMatchers("/api/auth/login").permitAll() // Đăng nhập
                 .requestMatchers("/api/menus").permitAll() // Cho phép truy cập công khai API lấy menu
                 .requestMatchers("/api/customer-requests").permitAll() // Cho phép truy cập công khai gửi yêu cầu
+                .requestMatchers("/api/chatbot/**").permitAll() // Cho phép chatbot AI không cần auth
                 .requestMatchers("/api/users/**").permitAll() // Cho phép truy cập công khai API người dùng để test
                 .requestMatchers("/actuator/**").permitAll() // Cho phép truy cập công khai actuator để debug
                 .anyRequest().authenticated() // Tất cả các request khác cần xác thực
