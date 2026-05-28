@@ -7,12 +7,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -24,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Service chatbot AI sử dụng Google Gemini API.
@@ -37,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TsoChatbotService {
 
     private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
+    private static final String GEMINI_STREAM_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent?alt=sse&key=%s";
     private static final int MAX_HISTORY_SIZE = 20; // Giới hạn số lượt hội thoại mỗi session
     private static final long SESSION_TTL_MS = 30 * 60 * 1000L; // 30 phút
     private static final String SYSTEM_PROMPT_FILE = "chatbot-system-prompt.md";
@@ -50,7 +57,11 @@ public class TsoChatbotService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
+            .version(HttpClient.Version.HTTP_2)
             .build();
+
+    // Thread pool riêng cho SSE streaming, tránh block Tomcat threads
+    private final ExecutorService sseExecutor = Executors.newCachedThreadPool();
 
     // In-memory session store: sessionId -> ChatSession
     private final Map<String, ChatSession> sessions = new ConcurrentHashMap<>();
@@ -127,10 +138,87 @@ public class TsoChatbotService {
     }
 
     /**
+     * Xử lý câu hỏi với SSE streaming — trả lời từng phần ngay lập tức.
+     * Gọi Gemini streamGenerateContent, parse từng chunk và gửi qua SseEmitter.
+     *
+     * @param request Yêu cầu chatbot từ client
+     * @param emitter SseEmitter để stream response về client
+     * @return sessionId để client duy trì hội thoại
+     */
+    public String askStream(TsoChatbotRequestDto request, SseEmitter emitter) {
+        // Tạo hoặc lấy session
+        String sessionId = request.getSessionId();
+        if (sessionId == null || sessionId.isBlank()) {
+            sessionId = UUID.randomUUID().toString();
+        }
+
+        ChatSession session = sessions.compute(sessionId, (key, existing) -> {
+            if (existing == null || existing.isExpired()) {
+                return new ChatSession();
+            }
+            existing.touch();
+            return existing;
+        });
+
+        // Thêm tin nhắn user vào history
+        session.addMessage("user", request.getMessage());
+
+        // Gửi sessionId event trước để client biết
+        final String finalSessionId = sessionId;
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("session")
+                    .data("{\"sessionId\":\"" + finalSessionId + "\"}"));
+        } catch (Exception e) {
+            log.error("[TsoChatbotService] Lỗi gửi sessionId event: {}", e.getMessage());
+        }
+
+        // Chạy streaming trên thread pool riêng
+        sseExecutor.execute(() -> {
+            try {
+                String fullReply = callGeminiStreamApi(session, emitter);
+
+                // Lưu reply hoàn chỉnh vào session history
+                session.addMessage("model", fullReply);
+
+                // Gửi event done
+                emitter.send(SseEmitter.event().name("done").data("{\"status\":\"completed\"}"));
+                emitter.complete();
+            } catch (Exception e) {
+                log.error("[TsoChatbotService] Lỗi streaming Gemini API: {}", e.getMessage(), e);
+                // Xóa tin nhắn user nếu lỗi
+                session.removeLastMessage();
+                try {
+                    String errorMsg;
+                    if ("RATE_LIMIT_EXCEEDED".equals(e.getMessage())) {
+                        errorMsg = "Hệ thống AI đang quá tải do nhận được quá nhiều yêu cầu. Vui lòng chờ khoảng 20 giây và thử lại. ⏳";
+                    } else {
+                        errorMsg = "Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau hoặc liên hệ hotline để được hỗ trợ. ☎️";
+                    }
+                    emitter.send(SseEmitter.event().name("error").data("{\"message\":\"" + errorMsg + "\"}"));
+                    emitter.complete();
+                } catch (Exception ex) {
+                    emitter.completeWithError(ex);
+                }
+            }
+        });
+
+        return sessionId;
+    }
+
+    /**
      * Dọn dẹp các session hết hạn (có thể gọi từ @Scheduled).
      */
     public void cleanExpiredSessions() {
         sessions.entrySet().removeIf(entry -> entry.getValue().isExpired());
+    }
+
+    /**
+     * Shutdown thread pool khi ứng dụng dừng.
+     */
+    @PreDestroy
+    private void shutdown() {
+        sseExecutor.shutdown();
     }
 
     // =========================================================================
@@ -218,6 +306,131 @@ public class TsoChatbotService {
         }
 
         throw new RuntimeException("Không thể parse response từ Gemini API");
+    }
+
+    /**
+     * Gọi Gemini Stream API — đọc SSE stream từ Gemini và forward từng chunk text qua SseEmitter.
+     * Trả về reply hoàn chỉnh (ghép tất cả chunks) để lưu vào session history.
+     */
+    private String callGeminiStreamApi(ChatSession session, SseEmitter emitter) throws Exception {
+        String url = String.format(GEMINI_STREAM_API_URL, model, apiKey);
+
+        // Build request body (giống callGeminiApi)
+        String jsonBody = buildGeminiRequestBody(session);
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .timeout(Duration.ofSeconds(60))
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                .build();
+
+        // Dùng InputStream để đọc stream từ Gemini
+        HttpResponse<InputStream> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+
+        if (response.statusCode() == 429) {
+            log.warn("[TsoChatbotService] Gemini Stream API quá tải (429): lỗi rate limit");
+            throw new RuntimeException("RATE_LIMIT_EXCEEDED");
+        }
+
+        if (response.statusCode() != 200) {
+            // Đọc body lỗi
+            String errorBody = new String(response.body().readAllBytes(), StandardCharsets.UTF_8);
+            log.error("[TsoChatbotService] Gemini Stream API trả về lỗi {}: {}", response.statusCode(), errorBody);
+            throw new RuntimeException("Gemini API error: " + response.statusCode());
+        }
+
+        // Đọc SSE stream line-by-line
+        StringBuilder fullReply = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Gemini SSE format: "data: {json}" hoặc dòng trống
+                if (line.startsWith("data: ")) {
+                    String jsonData = line.substring(6).trim();
+                    if (jsonData.isEmpty()) continue;
+
+                    try {
+                        // Parse JSON chunk từ Gemini
+                        JsonNode chunkRoot = objectMapper.readTree(jsonData);
+                        JsonNode candidates = chunkRoot.path("candidates");
+                        if (candidates.isArray() && !candidates.isEmpty()) {
+                            JsonNode contentParts = candidates.get(0).path("content").path("parts");
+                            if (contentParts.isArray()) {
+                                for (JsonNode part : contentParts) {
+                                    String text = part.path("text").asText("");
+                                    if (!text.isEmpty()) {
+                                        fullReply.append(text);
+                                        // Gửi chunk text qua SSE tới client
+                                        emitter.send(SseEmitter.event()
+                                                .name("chunk")
+                                                .data("{\"text\":\"" + escapeJson(text) + "\"}"));
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.debug("[TsoChatbotService] Bỏ qua chunk không parse được: {}", jsonData);
+                    }
+                }
+            }
+        }
+
+        if (fullReply.isEmpty()) {
+            throw new RuntimeException("Không nhận được response từ Gemini Stream API");
+        }
+
+        return fullReply.toString();
+    }
+
+    /**
+     * Build JSON request body chung cho cả generateContent và streamGenerateContent.
+     */
+    private String buildGeminiRequestBody(ChatSession session) throws Exception {
+        ObjectNode requestBody = objectMapper.createObjectNode();
+
+        // System instruction
+        ObjectNode systemInstruction = objectMapper.createObjectNode();
+        ObjectNode systemPart = objectMapper.createObjectNode();
+        systemPart.put("text", systemPrompt);
+        ArrayNode systemParts = objectMapper.createArrayNode();
+        systemParts.add(systemPart);
+        systemInstruction.set("parts", systemParts);
+        requestBody.set("system_instruction", systemInstruction);
+
+        // Contents (conversation history)
+        ArrayNode contents = objectMapper.createArrayNode();
+        for (ChatMessage msg : session.getMessages()) {
+            ObjectNode content = objectMapper.createObjectNode();
+            content.put("role", msg.role());
+            ObjectNode part = objectMapper.createObjectNode();
+            part.put("text", msg.text());
+            ArrayNode parts = objectMapper.createArrayNode();
+            parts.add(part);
+            content.set("parts", parts);
+            contents.add(content);
+        }
+        requestBody.set("contents", contents);
+
+        // Generation config
+        ObjectNode generationConfig = objectMapper.createObjectNode();
+        generationConfig.put("temperature", 0.7);
+        generationConfig.put("maxOutputTokens", 1024);
+        requestBody.set("generationConfig", generationConfig);
+
+        return objectMapper.writeValueAsString(requestBody);
+    }
+
+    /**
+     * Escape chuỗi cho JSON string (xử lý newline, quotes, backslash, tabs).
+     */
+    private String escapeJson(String text) {
+        return text
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     // =========================================================================
