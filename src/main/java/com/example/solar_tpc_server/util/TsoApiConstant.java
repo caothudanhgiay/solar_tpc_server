@@ -16,6 +16,7 @@ public final class TsoApiConstant {
     public static final String API_CUSTOMER_REQUESTS = API_BASE + "/customer-requests";
     public static final String API_USERS = API_BASE + "/users";
     public static final String API_CHATBOT = API_BASE + "/chatbot";
+    public static final String API_PROJECTS = API_BASE + "/projects";
 
     // HTTP Methods
     public static final String GET = "GET";

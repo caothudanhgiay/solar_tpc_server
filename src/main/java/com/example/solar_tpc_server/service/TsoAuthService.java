@@ -51,6 +51,7 @@ public class TsoAuthService {
 
         return TsoLoginResponseDto.builder()
                 .token(token)
+                .userId(user.getUserId())
                 .username(user.getUsername())
                 .role(user.getRoleId() != null ? user.getRoleId().toString() : "ADMIN")
                 .build();

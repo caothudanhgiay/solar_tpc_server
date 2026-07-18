@@ -7,11 +7,10 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class TsoLoginResponseDto {
-    private String token;
-    private Long userId;
-    private String username;
-    private String role;
+@AllArgsConstructor
+public class TsoChangePasswordDto {
+    private String oldPassword;
+    private String newPassword;
+    private String confirmPassword;
 }

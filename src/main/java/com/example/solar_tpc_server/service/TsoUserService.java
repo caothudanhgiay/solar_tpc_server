@@ -1,6 +1,7 @@
 package com.example.solar_tpc_server.service;
 
 import com.example.solar_tpc_server.dto.TsoUserDto;
+import com.example.solar_tpc_server.dto.TsoChangePasswordDto;
 import com.example.solar_tpc_server.entity.TsoUser;
 import com.example.solar_tpc_server.exception.TsoAppException;
 import com.example.solar_tpc_server.exception.TsoErrorCode;
@@ -65,11 +66,6 @@ public class TsoUserService {
         user.setAccessId(dto.getAccessId());
         user.setRoleId(dto.getRoleId());
 
-        // Password update is optional
-        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        }
-
         user.setUpdatedDate(TSODateUtil.datetimeNow());
 
         TsoUser updatedUser = tsoUserRepository.save(user);
@@ -82,6 +78,20 @@ public class TsoUserService {
             throw new TsoAppException(TsoErrorCode.USER_NOT_EXISTED);
         }
         tsoUserRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void changePassword(Long id, TsoChangePasswordDto dto) {
+        TsoUser user = tsoUserRepository.findById(id)
+                .orElseThrow(() -> new TsoAppException(TsoErrorCode.USER_NOT_EXISTED));
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không chính xác"); // Or a specific exception
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        user.setUpdatedDate(TSODateUtil.datetimeNow());
+        tsoUserRepository.save(user);
     }
 
     private TsoUserDto convertToDto(TsoUser user) {

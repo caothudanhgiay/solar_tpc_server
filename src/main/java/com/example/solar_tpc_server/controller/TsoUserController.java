@@ -1,16 +1,20 @@
 package com.example.solar_tpc_server.controller;
 
 import com.example.solar_tpc_server.dto.TsoUserDto;
+import com.example.solar_tpc_server.dto.TsoChangePasswordDto;
 import com.example.solar_tpc_server.repository.TsoUserRepository;
 import com.example.solar_tpc_server.response.TsoApiResponse;
 import com.example.solar_tpc_server.service.TsoUserService;
 import com.example.solar_tpc_server.util.TsoApiConstant;
+import com.example.solar_tpc_server.util.TsoExcelExportUtil;
 import com.example.solar_tpc_server.util.TsoMessageUtil;
 import com.example.solar_tpc_server.validation.TSOUserValidation;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -70,5 +74,33 @@ public class TsoUserController {
     public ResponseEntity<TsoApiResponse<Object>> deleteUser(@PathVariable Long id) {
         tsoUserService.deleteUser(id);
         return ResponseEntity.ok(TsoApiResponse.success(null, TsoMessageUtil.getMessage("user.delete_success")));
+    }
+
+    @PutMapping("/{id}/password")
+    public ResponseEntity<TsoApiResponse<Object>> changePassword(@PathVariable Long id,
+            @RequestBody TsoChangePasswordDto dto) {
+        tsoUserService.changePassword(id, dto);
+        return ResponseEntity.ok(TsoApiResponse.success(null, "Thay đổi mật khẩu thành công"));
+    }
+
+    /**
+     * Xuất danh sách người dùng ra file Excel (.xlsx).
+     * GET /api/users/export
+     */
+    @GetMapping("/export")
+    public void exportExcel(HttpServletResponse response) throws IOException {
+        List<TsoUserDto> users = tsoUserService.getAllUsers();
+        TsoExcelExportUtil.export(
+                response,
+                "danh_sach_nguoi_dung",
+                List.of("ID", "T\u00e0i kho\u1ea3n", "Email", "Quy\u1ec1n h\u1ea1n", "Access ID"),
+                users,
+                (row, u) -> {
+                    row.createCell(0).setCellValue(u.getUserId() != null ? u.getUserId() : 0);
+                    row.createCell(1).setCellValue(u.getUsername() != null ? u.getUsername() : "");
+                    row.createCell(2).setCellValue(u.getEmail() != null ? u.getEmail() : "");
+                    row.createCell(3).setCellValue(u.getRoleId() != null ? u.getRoleId().toString() : "");
+                    row.createCell(4).setCellValue(u.getAccessId() != null ? u.getAccessId().toString() : "");
+                });
     }
 }
