@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.solar_tpc_server.enums.TsoProjectStatusEnum;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +29,11 @@ public class TsoProjectService {
     private final TsoProjectDetailRepository projectDetailRepository;
     private final com.example.solar_tpc_server.util.TsoFileUtil tsoFileUtil;
 
-    private final String imageUrlPrefix = com.example.solar_tpc_server.util.TsoConstant.UPLOAD_PROJECT_DIR + "/";
+    @Value("${upload.url.prefix:/upload/images/products}")
+    private String uploadUrlPrefix;
+
+    @Value("${upload.url.legacy-prefix:/upload/images/projects}")
+    private String uploadLegacyUrlPrefix;
 
     public List<TsoProjectDto> getAllProjects() {
         return projectRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
@@ -181,7 +187,7 @@ public class TsoProjectService {
         dto.setSolarPower(entity.getSolarPower());
         dto.setSavingPower(entity.getSavingPower());
         dto.setProcessStatus(entity.getProcessStatus());
-        dto.setProcessStatusName(com.example.solar_tpc_server.util.TsoEnumUtil.getProjectStatusName(entity.getProcessStatus()));
+        dto.setProcessStatusName(TsoProjectStatusEnum.getDisplayName(entity.getProcessStatus()));
         dto.setStartDate(entity.getStartDate());
         dto.setEndDate(entity.getEndDate());
         dto.setFeaturedImage(buildImageUrl(entity.getProjectCode(), entity.getFeaturedImage(), false));
@@ -204,10 +210,11 @@ public class TsoProjectService {
         if (!StringUtils.hasText(fileName)) {
             return fileName;
         }
-        if (fileName.startsWith("http") || fileName.startsWith(imageUrlPrefix)) {
+        if (fileName.startsWith("http") || fileName.startsWith(normalizeUrlPrefix(uploadUrlPrefix))
+                || fileName.startsWith(normalizeUrlPrefix(uploadLegacyUrlPrefix))) {
             return fileName;
         }
-        String path = imageUrlPrefix + projectCode + "/";
+        String path = normalizeUrlPrefix(uploadUrlPrefix) + "/" + projectCode + "/";
         if (isDetail) {
             path += "product_detail/";
         }
@@ -218,17 +225,26 @@ public class TsoProjectService {
         if (!StringUtils.hasText(url)) {
             return url;
         }
-        String prefix = imageUrlPrefix + projectCode + "/";
-        if (isDetail) {
-            prefix += "product_detail/";
+        for (String prefix : new String[]{uploadUrlPrefix, uploadLegacyUrlPrefix}) {
+            String fullPrefix = normalizeUrlPrefix(prefix) + "/" + projectCode + "/";
+            if (isDetail) {
+                fullPrefix += "product_detail/";
+            }
+            if (url.startsWith(fullPrefix)) {
+                return url.substring(fullPrefix.length());
+            }
         }
-        if (url.startsWith(prefix)) {
-            return url.substring(prefix.length());
-        }
-        // If it starts with a slash but not the prefix, try to get just the filename
         if (url.contains("/")) {
             return url.substring(url.lastIndexOf('/') + 1);
         }
         return url;
+    }
+
+    private String normalizeUrlPrefix(String prefix) {
+        if (!StringUtils.hasText(prefix)) {
+            return "/upload/images/products";
+        }
+        String normalized = prefix.startsWith("/") ? prefix : "/" + prefix;
+        return normalized.endsWith("/") ? normalized.substring(0, normalized.length() - 1) : normalized;
     }
 }
