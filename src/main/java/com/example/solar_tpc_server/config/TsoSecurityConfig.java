@@ -67,6 +67,7 @@ public class TsoSecurityConfig {
                 .requestMatchers("/api/chatbot/**").permitAll() // Cho phép chatbot AI không cần auth
                 .requestMatchers("/api/users/**").permitAll() // Cho phép truy cập công khai API người dùng để test
                 .requestMatchers("/actuator/**").permitAll() // Cho phép truy cập công khai actuator để debug
+                .requestMatchers("/upload/**").permitAll() // Cho phép truy cập công khai thư mục upload
                 .anyRequest().authenticated() // Tất cả các request khác cần xác thực
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));

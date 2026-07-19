@@ -24,6 +24,9 @@ public class TsoProjectDetail extends TsoMetaData {
     @Column(name = "project_id", nullable = false)
     private Long projectId;
 
+    @Column(name = "project_code", length = 10, nullable = false)
+    private String projectCode;
+
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 

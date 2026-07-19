@@ -6,7 +6,7 @@ import com.example.solar_tpc_server.entity.TsoUser;
 import com.example.solar_tpc_server.exception.TsoAppException;
 import com.example.solar_tpc_server.exception.TsoErrorCode;
 import com.example.solar_tpc_server.repository.TsoUserRepository;
-import com.example.solar_tpc_server.util.TSODateUtil;
+import com.example.solar_tpc_server.util.TsoDateUtil;
 import com.example.solar_tpc_server.util.TsoCommonUtil;
 import com.example.solar_tpc_server.util.TsoConstant;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class TsoUserService {
 
         String createAt = TsoCommonUtil.isNotBlank(dto.getCreatedAt()) ? dto.getCreatedAt() : TsoConstant.SYSTEM;
         user.setCreatedAt(createAt);
-        user.setCreatedDate(TSODateUtil.datetimeNow());
+        user.setCreatedDate(TsoDateUtil.datetimeNow());
         user.setUpdatedDate(null);
 
         TsoUser savedUser = tsoUserRepository.save(user);
@@ -66,7 +66,7 @@ public class TsoUserService {
         user.setAccessId(dto.getAccessId());
         user.setRoleId(dto.getRoleId());
 
-        user.setUpdatedDate(TSODateUtil.datetimeNow());
+        user.setUpdatedDate(TsoDateUtil.datetimeNow());
 
         TsoUser updatedUser = tsoUserRepository.save(user);
         return convertToDto(updatedUser);
@@ -90,7 +90,7 @@ public class TsoUserService {
         }
 
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
-        user.setUpdatedDate(TSODateUtil.datetimeNow());
+        user.setUpdatedDate(TsoDateUtil.datetimeNow());
         tsoUserRepository.save(user);
     }
 

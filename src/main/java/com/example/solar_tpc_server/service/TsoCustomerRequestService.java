@@ -3,7 +3,7 @@ package com.example.solar_tpc_server.service;
 import com.example.solar_tpc_server.dto.TsoCustomerRequestDto;
 import com.example.solar_tpc_server.entity.TsoCustomerRequest;
 import com.example.solar_tpc_server.repository.TsoCustomerRequestRepository;
-import com.example.solar_tpc_server.util.TSODateUtil;
+import com.example.solar_tpc_server.util.TsoDateUtil;
 import com.example.solar_tpc_server.util.TsoConstant;
 
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class TsoCustomerRequestService {
         request.setCustomerAddress(requestDto.getCustomerAddress());
         request.setRequestContent(requestDto.getRequestContent());
         request.setCreatedAt(TsoConstant.SYSTEM);
-        request.setCreatedDate(TSODateUtil.datetimeNow());
+        request.setCreatedDate(TsoDateUtil.datetimeNow());
         request.setUpdatedDate(null);
         repository.save(request);
 

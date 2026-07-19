@@ -19,6 +19,9 @@ public class TsoProject extends TsoMetaData {
     @Column(name = "project_id")
     private Long projectId;
 
+    @Column(name = "project_code", length = 10, nullable = false)
+    private String projectCode;
+
     @Column(name = "project_title", nullable = false)
     private String projectTitle;
 

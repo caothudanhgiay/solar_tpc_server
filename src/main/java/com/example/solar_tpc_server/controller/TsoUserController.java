@@ -6,7 +6,7 @@ import com.example.solar_tpc_server.repository.TsoUserRepository;
 import com.example.solar_tpc_server.response.TsoApiResponse;
 import com.example.solar_tpc_server.service.TsoUserService;
 import com.example.solar_tpc_server.util.TsoApiConstant;
-import com.example.solar_tpc_server.util.TsoExcelExportUtil;
+// import com.example.solar_tpc_server.util.TsoExcelExportUtil;
 import com.example.solar_tpc_server.util.TsoMessageUtil;
 import com.example.solar_tpc_server.validation.TSOUserValidation;
 import jakarta.servlet.http.HttpServletResponse;
@@ -87,6 +87,7 @@ public class TsoUserController {
      * Xuất danh sách người dùng ra file Excel (.xlsx).
      * GET /api/users/export
      */
+    /*
     @GetMapping("/export")
     public void exportExcel(HttpServletResponse response) throws IOException {
         List<TsoUserDto> users = tsoUserService.getAllUsers();
@@ -103,4 +104,5 @@ public class TsoUserController {
                     row.createCell(4).setCellValue(u.getAccessId() != null ? u.getAccessId().toString() : "");
                 });
     }
+    */
 }

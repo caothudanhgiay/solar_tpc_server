@@ -13,4 +13,7 @@ public final class TsoConstant {
     public static final String LANG_VI = "vi";
     public static final String LANG_EN = "en";
 
+    // File
+    public static final String UPLOAD_PROJECT_DIR = "/upload/images/projects";
+
 }

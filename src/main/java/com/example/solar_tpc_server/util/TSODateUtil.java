@@ -1,22 +1,24 @@
 package com.example.solar_tpc_server.util;
 
+import com.example.solar_tpc_server.config.TsoSystemConfig;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class TSODateUtil {
+public class TsoDateUtil {
 
     public static final String DATE_FORMAT = "yyyy-MM-dd";
     public static final String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     // date now
     public static LocalDate dateNow() {
-        return LocalDate.now();
+        return LocalDate.now(TsoSystemConfig.ZONE_ID);
     }
 
     // datetime now
     public static LocalDateTime datetimeNow() {
-        return LocalDateTime.now();
+        return LocalDateTime.now(TsoSystemConfig.ZONE_ID);
     }
 
     // convert date ra string

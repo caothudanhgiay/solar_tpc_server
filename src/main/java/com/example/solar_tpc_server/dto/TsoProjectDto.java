@@ -13,6 +13,9 @@ import java.util.List;
 public class TsoProjectDto {
     private Long projectId;
 
+    @NotBlank(message = "Mã dự án không được để trống")
+    private String projectCode;
+
     @NotBlank(message = "Tiêu đề dự án không được để trống")
     private String projectTitle;
 
@@ -27,6 +30,7 @@ public class TsoProjectDto {
     private java.math.BigDecimal solarPower;
     private java.math.BigDecimal savingPower;
     private Integer processStatus;
+    private String processStatusName;
     private java.time.LocalDate startDate;
     private java.time.LocalDate endDate;
 

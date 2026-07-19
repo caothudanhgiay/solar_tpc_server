@@ -12,6 +12,7 @@ import java.time.LocalDate;
 public class TsoProjectDetailDto {
     private Long projectDetailId;
     private Long projectId;
+    private String projectCode;
     private String imageUrl;
     private String content;
     private LocalDate constructionDate;
