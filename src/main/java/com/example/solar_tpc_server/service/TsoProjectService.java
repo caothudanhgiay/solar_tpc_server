@@ -29,7 +29,7 @@ public class TsoProjectService {
     private final TsoProjectDetailRepository projectDetailRepository;
     private final com.example.solar_tpc_server.util.TsoFileUtil tsoFileUtil;
 
-    @Value("${upload.url.prefix:/upload/images/products}")
+    @Value("${upload.url.prefix:/upload/images/projects}")
     private String uploadUrlPrefix;
 
     @Value("${upload.url.legacy-prefix:/upload/images/projects}")
