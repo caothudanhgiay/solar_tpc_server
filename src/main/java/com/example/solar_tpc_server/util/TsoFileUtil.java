@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 public class TsoFileUtil {
 
     public String getBaseUploadDir() {
-        String envDir = System.getenv("UPLOAD_PRODUCT_DIR");
+        String envDir = System.getenv("UPLOAD_PROJECT_DIR");
         if (envDir != null && !envDir.trim().isEmpty()) {
             return envDir + TsoConstant.UPLOAD_PROJECT_DIR;
         } else {
