@@ -29,11 +29,8 @@ public class TsoProjectService {
     private final TsoProjectDetailRepository projectDetailRepository;
     private final com.example.solar_tpc_server.util.TsoFileUtil tsoFileUtil;
 
-    @Value("${upload.url.prefix:/upload/images/projects}")
-    private String uploadUrlPrefix;
-
-    @Value("${upload.url.legacy-prefix:/upload/images/projects}")
-    private String uploadLegacyUrlPrefix;
+    // Removed configurable URL prefix to strictly use TsoConstant.UPLOAD_PROJECT_DIR
+    // which aligns with Nginx /upload/ location.
 
     public List<TsoProjectDto> getAllProjects() {
         return projectRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
@@ -210,11 +207,18 @@ public class TsoProjectService {
         if (!StringUtils.hasText(fileName)) {
             return fileName;
         }
-        if (fileName.startsWith("http") || fileName.startsWith(normalizeUrlPrefix(uploadUrlPrefix))
-                || fileName.startsWith(normalizeUrlPrefix(uploadLegacyUrlPrefix))) {
+        String prefix = com.example.solar_tpc_server.util.TsoConstant.UPLOAD_PROJECT_DIR;
+        if (fileName.startsWith("http") || fileName.startsWith(prefix)) {
             return fileName;
         }
-        String path = normalizeUrlPrefix(uploadUrlPrefix) + "/" + projectCode + "/";
+        // Also handle legacy or accidental /images/products/ in the database
+        if (fileName.startsWith("/images/products")) {
+             fileName = fileName.substring("/images/products".length());
+             if (fileName.startsWith("/")) {
+                 fileName = fileName.substring(1);
+             }
+        }
+        String path = prefix + "/" + projectCode + "/";
         if (isDetail) {
             path += "product_detail/";
         }
@@ -225,26 +229,27 @@ public class TsoProjectService {
         if (!StringUtils.hasText(url)) {
             return url;
         }
-        for (String prefix : new String[]{uploadUrlPrefix, uploadLegacyUrlPrefix}) {
-            String fullPrefix = normalizeUrlPrefix(prefix) + "/" + projectCode + "/";
+        String prefix = com.example.solar_tpc_server.util.TsoConstant.UPLOAD_PROJECT_DIR;
+        String fullPrefix = prefix + "/" + projectCode + "/";
+        if (isDetail) {
+            fullPrefix += "product_detail/";
+        }
+        if (url.startsWith(fullPrefix)) {
+            return url.substring(fullPrefix.length());
+        }
+        // Extract from legacy URLs just in case
+        if (url.startsWith("/images/products/" + projectCode + "/")) {
+            String legacyPrefix = "/images/products/" + projectCode + "/";
             if (isDetail) {
-                fullPrefix += "product_detail/";
+                 legacyPrefix += "product_detail/";
             }
-            if (url.startsWith(fullPrefix)) {
-                return url.substring(fullPrefix.length());
+            if (url.startsWith(legacyPrefix)) {
+                 return url.substring(legacyPrefix.length());
             }
         }
         if (url.contains("/")) {
             return url.substring(url.lastIndexOf('/') + 1);
         }
         return url;
-    }
-
-    private String normalizeUrlPrefix(String prefix) {
-        if (!StringUtils.hasText(prefix)) {
-            return "/upload/images/products";
-        }
-        String normalized = prefix.startsWith("/") ? prefix : "/" + prefix;
-        return normalized.endsWith("/") ? normalized.substring(0, normalized.length() - 1) : normalized;
     }
 }
