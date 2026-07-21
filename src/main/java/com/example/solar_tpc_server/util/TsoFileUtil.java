@@ -19,6 +19,15 @@ public class TsoFileUtil {
     public String getBaseUploadDir() {
         String envDir = System.getenv("UPLOAD_PROJECT_DIR");
         if (envDir != null && !envDir.trim().isEmpty()) {
+            envDir = envDir.trim();
+            // Remove trailing slash or backslash if present
+            if (envDir.endsWith("/") || envDir.endsWith("\\")) {
+                envDir = envDir.substring(0, envDir.length() - 1);
+            }
+            // Prevent double "/upload" if the user accidentally included it in the environment variable
+            if (envDir.endsWith("/upload")) {
+                envDir = envDir.substring(0, envDir.length() - 7);
+            }
             return envDir + TsoConstant.UPLOAD_PROJECT_DIR;
         } else {
             return "D:/my_work/git/solar_tpcgr/solar-tpcgr" + TsoConstant.UPLOAD_PROJECT_DIR;
