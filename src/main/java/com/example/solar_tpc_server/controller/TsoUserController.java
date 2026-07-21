@@ -2,6 +2,8 @@ package com.example.solar_tpc_server.controller;
 
 import com.example.solar_tpc_server.dto.TsoUserDto;
 import com.example.solar_tpc_server.dto.TsoChangePasswordDto;
+import com.example.solar_tpc_server.enums.TsoAccessEnum;
+import com.example.solar_tpc_server.enums.TsoRoleEnum;
 import com.example.solar_tpc_server.repository.TsoUserRepository;
 import com.example.solar_tpc_server.response.TsoApiResponse;
 import com.example.solar_tpc_server.service.TsoUserService;
@@ -27,9 +29,28 @@ public class TsoUserController {
     private final TsoUserRepository tsoUserRepository;
 
     @GetMapping
-    public ResponseEntity<TsoApiResponse<List<TsoUserDto>>> getAllUsers() {
+    public ResponseEntity<TsoApiResponse<Object>> getAllUsers() {
         List<TsoUserDto> users = tsoUserService.getAllUsers();
-        return ResponseEntity.ok(TsoApiResponse.success(users, TsoMessageUtil.getMessage("user.fetch_success")));
+        
+        var roles = java.util.Arrays.stream(com.example.solar_tpc_server.enums.TsoRoleEnum.values())
+                .map(r -> Map.of(
+                        "value", r.getRoleId(),
+                        "labelKey", r.getName()))
+                .collect(java.util.stream.Collectors.toList());
+                
+        var accesses = java.util.Arrays.stream(com.example.solar_tpc_server.enums.TsoAccessEnum.values())
+                .map(a -> Map.of(
+                        "value", a.getRoleId(),
+                        "labelKey", a.getName()))
+                .collect(java.util.stream.Collectors.toList());
+                
+        var data = Map.of(
+                "page", Map.of("content", users),
+                "roles", roles, 
+                "accesses", accesses
+        );
+                
+        return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("user.fetch_success")));
     }
 
     @GetMapping("/{id}")

@@ -25,7 +25,11 @@ public class TsoUserDto {
     
     private Long accessId;
     
+    private String accessName;
+    
     private Long roleId;
+    
+    private String roleName;
     
     private String createdAt;
     
