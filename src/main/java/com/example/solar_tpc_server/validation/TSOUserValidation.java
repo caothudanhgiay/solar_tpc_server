@@ -29,8 +29,8 @@ public class TSOUserValidation {
         // 2. Password validation
         if (!TSOValidation.isRequired(dto.getPassword())) {
             errors.put("password", TsoMessageUtil.getMessage("validation.password.required"));
-        } else if (!TSOValidation.minLength(dto.getPassword(), 6)) {
-            errors.put("password", TsoMessageUtil.getMessage("validation.password.minLength"));
+        } else if (!TSOValidation.isStrongPassword(dto.getPassword())) {
+            errors.put("password", TsoMessageUtil.getMessage("validation.password.weak"));
         }
 
         // 3. Email validation
@@ -79,8 +79,8 @@ public class TSOUserValidation {
 
         // 2. Password validation (Optional for update)
         if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
-            if (!TSOValidation.minLength(dto.getPassword(), 6)) {
-                errors.put("password", TsoMessageUtil.getMessage("validation.password.minLength"));
+            if (!TSOValidation.isStrongPassword(dto.getPassword())) {
+                errors.put("password", TsoMessageUtil.getMessage("validation.password.weak"));
             }
         }
 

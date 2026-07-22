@@ -11,6 +11,7 @@ import com.example.solar_tpc_server.util.TsoApiConstant;
 // import com.example.solar_tpc_server.util.TsoExcelExportUtil;
 import com.example.solar_tpc_server.util.TsoMessageUtil;
 import com.example.solar_tpc_server.validation.TSOUserValidation;
+import com.example.solar_tpc_server.validation.TSOValidation;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -100,6 +101,22 @@ public class TsoUserController {
     @PutMapping("/{id}/password")
     public ResponseEntity<TsoApiResponse<Object>> changePassword(@PathVariable Long id,
             @RequestBody TsoChangePasswordDto dto) {
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            Map<String, String> errors = Map.of("confirmPassword", "Mật khẩu xác nhận không khớp");
+            return ResponseEntity.status(400).body(TsoApiResponse.<Object>builder()
+                    .statusCode(400)
+                    .message(TsoMessageUtil.getMessage("error.invalid_input"))
+                    .data(errors)
+                    .build());
+        }
+        if (!TSOValidation.isStrongPassword(dto.getNewPassword())) {
+            Map<String, String> errors = Map.of("newPassword", TsoMessageUtil.getMessage("validation.password.weak"));
+            return ResponseEntity.status(400).body(TsoApiResponse.<Object>builder()
+                    .statusCode(400)
+                    .message(TsoMessageUtil.getMessage("error.invalid_input"))
+                    .data(errors)
+                    .build());
+        }
         tsoUserService.changePassword(id, dto);
         return ResponseEntity.ok(TsoApiResponse.success(null, "Thay đổi mật khẩu thành công"));
     }

@@ -13,6 +13,10 @@ public class TSOValidation {
     private static final String NUMBER_REGEX = "^-?\\d+(\\.\\d+)?$";
     private static final Pattern NUMBER_PATTERN = Pattern.compile(NUMBER_REGEX);
 
+    // Password must contain at least one digit, one uppercase letter, one special character, and be at least 6 characters long
+    private static final String PASSWORD_REGEX = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{6,}$";
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(PASSWORD_REGEX);
+
     public static boolean isRequired(String value) {
         return value != null && !value.trim().isEmpty();
     }
@@ -39,6 +43,12 @@ public class TSOValidation {
         if (value == null || value.trim().isEmpty())
             return true;
         return NUMBER_PATTERN.matcher(value).matches();
+    }
+
+    public static boolean isStrongPassword(String password) {
+        if (password == null || password.trim().isEmpty())
+            return false;
+        return PASSWORD_PATTERN.matcher(password).matches();
     }
 
     public static boolean isDate(String dateStr, String format) {
