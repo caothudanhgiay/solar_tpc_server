@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,9 +26,28 @@ public class TsoUserService {
     private final TsoUserRepository tsoUserRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private TsoUser getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new TsoAppException(TsoErrorCode.UNAUTHORIZED);
+        }
+        String username = authentication.getName();
+        return tsoUserRepository.findByUsername(username)
+                .orElseThrow(() -> new TsoAppException(TsoErrorCode.USER_NOT_EXISTED));
+    }
+
     @Transactional(readOnly = true)
     public List<TsoUserDto> getAllUsers() {
+        TsoUser currentUser = getCurrentUser();
+        Long currentUserRoleId = currentUser.getRoleId();
+
         return tsoUserRepository.findAll().stream()
+                .filter(user -> {
+                    if (currentUserRoleId == 1L) return true; // Root sees all
+                    if (currentUserRoleId == 2L) return user.getRoleId() == 2L || user.getRoleId() == 3L; // Admin sees admins and users
+                    if (currentUserRoleId == 3L) return user.getRoleId() == 3L; // User sees only users
+                    return false; // Guest
+                })
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -40,6 +61,16 @@ public class TsoUserService {
 
     @Transactional
     public TsoUserDto createUser(TsoUserDto dto) {
+        TsoUser currentUser = getCurrentUser();
+        Long currentUserRoleId = currentUser.getRoleId();
+
+        if (currentUserRoleId == 3L) {
+            throw new TsoAppException(TsoErrorCode.FORBIDDEN); // User cannot create
+        }
+        if (currentUserRoleId == 2L && (dto.getRoleId() == 1L || dto.getRoleId() == 2L)) {
+            throw new TsoAppException(TsoErrorCode.FORBIDDEN); // Admin cannot create Root or Admin
+        }
+
         TsoUser user = new TsoUser();
         user.setUsername(dto.getUsername().trim());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
@@ -58,8 +89,24 @@ public class TsoUserService {
 
     @Transactional
     public TsoUserDto updateUser(Long id, TsoUserDto dto) {
+        TsoUser currentUser = getCurrentUser();
+        Long currentUserRoleId = currentUser.getRoleId();
+
         TsoUser user = tsoUserRepository.findById(id)
                 .orElseThrow(() -> new TsoAppException(TsoErrorCode.USER_NOT_EXISTED));
+
+        if (currentUserRoleId == 3L) {
+            throw new TsoAppException(TsoErrorCode.FORBIDDEN);
+        }
+
+        if (currentUserRoleId == 2L) {
+            if (user.getRoleId() == 1L || (user.getRoleId() == 2L && !user.getUserId().equals(currentUser.getUserId()))) {
+                throw new TsoAppException(TsoErrorCode.FORBIDDEN);
+            }
+            if (dto.getRoleId() == 1L || (dto.getRoleId() == 2L && !user.getUserId().equals(currentUser.getUserId()))) {
+                throw new TsoAppException(TsoErrorCode.FORBIDDEN);
+            }
+        }
 
         user.setUsername(dto.getUsername().trim());
         user.setEmail(dto.getEmail().trim());
@@ -74,9 +121,22 @@ public class TsoUserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        if (!tsoUserRepository.existsById(id)) {
-            throw new TsoAppException(TsoErrorCode.USER_NOT_EXISTED);
+        TsoUser currentUser = getCurrentUser();
+        Long currentUserRoleId = currentUser.getRoleId();
+
+        if (currentUserRoleId == 3L) {
+            throw new TsoAppException(TsoErrorCode.FORBIDDEN);
         }
+
+        TsoUser targetUser = tsoUserRepository.findById(id)
+                .orElseThrow(() -> new TsoAppException(TsoErrorCode.USER_NOT_EXISTED));
+
+        if (currentUserRoleId == 2L) {
+            if (targetUser.getRoleId() == 1L || (targetUser.getRoleId() == 2L && !targetUser.getUserId().equals(currentUser.getUserId()))) {
+                throw new TsoAppException(TsoErrorCode.FORBIDDEN);
+            }
+        }
+
         tsoUserRepository.deleteById(id);
     }
 
