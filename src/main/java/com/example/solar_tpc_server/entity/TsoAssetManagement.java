@@ -21,6 +21,12 @@ public class TsoAssetManagement extends TsoMetaData {
     @Column(name = "asset_id")
     private Long assetId;
 
+    @Column(name = "asset_code", length = 10, nullable = false)
+    private String assetCode;
+
+    @Column(name = "asset_image", length = 500, nullable = false)
+    private String assetImage;
+
     @Column(name = "asset_group", length = 10, nullable = false)
     private String assetGroup;
 

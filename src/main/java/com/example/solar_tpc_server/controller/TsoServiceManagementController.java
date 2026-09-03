@@ -1,11 +1,11 @@
 package com.example.solar_tpc_server.controller;
 
-import com.example.solar_tpc_server.dto.TsoAssetManagementDto;
-import com.example.solar_tpc_server.enums.TsoAssetStatusEnum;
+import com.example.solar_tpc_server.dto.TsoServiceManagementDto;
+import com.example.solar_tpc_server.enums.TsoServiceStatusEnum;
 import com.example.solar_tpc_server.response.TsoApiResponse;
-import com.example.solar_tpc_server.service.TsoAssetManagementService;
+import com.example.solar_tpc_server.service.TsoServiceManagementService;
 import com.example.solar_tpc_server.util.TsoMessageUtil;
-import jakarta.validation.Valid;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,23 +20,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/assets") // Or use TsoApiConstant if defined
+@RequestMapping("/api/v1/services")
 @RequiredArgsConstructor
-public class TsoAssetManagementController {
+public class TsoServiceManagementController {
 
-    private final TsoAssetManagementService assetManagementService;
+    private final TsoServiceManagementService serviceManagementService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping("/page")
-    public ResponseEntity<TsoApiResponse<Object>> getAssetsPage(
+    public ResponseEntity<TsoApiResponse<Object>> getServicesPage(
             @RequestParam(required = false) String keyword,
             Pageable pageable) {
-        Page<TsoAssetManagementDto> page = assetManagementService.getAssetsPage(keyword, pageable);
+        Page<TsoServiceManagementDto> page = serviceManagementService.getServicesPage(keyword, pageable);
         
-        List<Map<String, Object>> statuses = Arrays.stream(TsoAssetStatusEnum.values())
+        List<Map<String, Object>> statuses = Arrays.stream(TsoServiceStatusEnum.values())
                 .map(status -> Map.of(
                         "value", (Object) status.getStatusId(),
-                        "labelKey", (Object) status.getNameKey()
+                        "labelKey", (Object) status.getName()
                 ))
                 .collect(Collectors.toList());
         
@@ -49,40 +48,40 @@ public class TsoAssetManagementController {
     }
 
     @GetMapping
-    public ResponseEntity<TsoApiResponse<Object>> getAllAssets() {
-        List<TsoAssetManagementDto> data = assetManagementService.getAllAssets();
+    public ResponseEntity<TsoApiResponse<Object>> getAllServices() {
+        List<TsoServiceManagementDto> data = serviceManagementService.getAllServices();
         return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("message.success")));
     }
 
-    @GetMapping("/{assetId}")
-    public ResponseEntity<TsoApiResponse<Object>> getAssetById(@PathVariable Long assetId) {
-        TsoAssetManagementDto data = assetManagementService.getAssetById(assetId);
+    @GetMapping("/{serviceId}")
+    public ResponseEntity<TsoApiResponse<Object>> getServiceById(@PathVariable Long serviceId) {
+        TsoServiceManagementDto data = serviceManagementService.getServiceById(serviceId);
         return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("message.success")));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<TsoApiResponse<Object>> createAsset(
+    public ResponseEntity<TsoApiResponse<Object>> createService(
             @RequestPart("data") String dataStr,
             @RequestPart(value = "file", required = false) MultipartFile file) throws Exception {
-        TsoAssetManagementDto dto = objectMapper.readValue(dataStr, TsoAssetManagementDto.class);
-        TsoAssetManagementDto data = assetManagementService.saveAsset(dto, file);
+        TsoServiceManagementDto dto = objectMapper.readValue(dataStr, TsoServiceManagementDto.class);
+        TsoServiceManagementDto data = serviceManagementService.saveService(dto, file);
         return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("message.success")));
     }
 
-    @PutMapping(value = "/{assetId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<TsoApiResponse<Object>> updateAsset(
-            @PathVariable Long assetId,
+    @PutMapping(value = "/{serviceId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TsoApiResponse<Object>> updateService(
+            @PathVariable Long serviceId,
             @RequestPart("data") String dataStr,
             @RequestPart(value = "file", required = false) MultipartFile file) throws Exception {
-        TsoAssetManagementDto dto = objectMapper.readValue(dataStr, TsoAssetManagementDto.class);
-        dto.setAssetId(assetId);
-        TsoAssetManagementDto data = assetManagementService.saveAsset(dto, file);
+        TsoServiceManagementDto dto = objectMapper.readValue(dataStr, TsoServiceManagementDto.class);
+        dto.setServiceId(serviceId);
+        TsoServiceManagementDto data = serviceManagementService.saveService(dto, file);
         return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("message.success")));
     }
 
-    @DeleteMapping("/{assetId}")
-    public ResponseEntity<TsoApiResponse<Object>> deleteAsset(@PathVariable Long assetId) {
-        assetManagementService.deleteAsset(assetId);
+    @DeleteMapping("/{serviceId}")
+    public ResponseEntity<TsoApiResponse<Object>> deleteService(@PathVariable Long serviceId) {
+        serviceManagementService.deleteService(serviceId);
         return ResponseEntity.ok(TsoApiResponse.success(null, TsoMessageUtil.getMessage("message.success")));
     }
 }

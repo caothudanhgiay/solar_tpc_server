@@ -16,6 +16,11 @@ public class TsoAssetManagementDto {
 
     private Long assetId;
 
+    @NotBlank(message = "Mã thiết bị không được để trống")
+    private String assetCode;
+
+    private String assetImage;
+
     @NotBlank(message = "Nhóm thiết bị không được để trống")
     private String assetGroup;
 
