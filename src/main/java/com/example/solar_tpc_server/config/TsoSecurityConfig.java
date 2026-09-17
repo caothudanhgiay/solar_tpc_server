@@ -43,14 +43,14 @@ public class TsoSecurityConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         byte[] bytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        SecretKeySpec originalKey = new SecretKeySpec(bytes, 0, bytes.length, "RSA");
+        SecretKeySpec originalKey = new SecretKeySpec(bytes, 0, bytes.length, "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(originalKey).macAlgorithm(org.springframework.security.oauth2.jose.jws.MacAlgorithm.HS256).build();
     }
 
     @Bean
     public JwtEncoder jwtEncoder() {
         byte[] bytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        SecretKeySpec originalKey = new SecretKeySpec(bytes, 0, bytes.length, "RSA");
+        SecretKeySpec originalKey = new SecretKeySpec(bytes, 0, bytes.length, "HmacSHA256");
         return new NimbusJwtEncoder(new ImmutableSecret<>(originalKey));
     }
 
@@ -89,11 +89,10 @@ public class TsoSecurityConfig {
             add(TsoApiConstant.DELETE);
         }};   
         
-        // Sử dụng PropertyUtils để lấy cấu hình
-        String allowedOrigins = PropertyUtils.getProperty("app.cors.allowed-origins", "http://localhost:3000");
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(","))); 
+        // Cho phép tất cả các domain để tránh lỗi CORS khi truy cập từ máy khác hoặc qua www
+        configuration.setAllowedOriginPatterns(Arrays.asList("*")); 
         configuration.setAllowedMethods(methods);
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "Accept-Language"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true); // Cho phép gửi kèm cookie/credentials nếu cần
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
