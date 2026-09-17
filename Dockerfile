@@ -23,6 +23,9 @@ RUN ./gradlew bootJar --no-daemon -x test
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+# curl dùng cho HEALTHCHECK trong docker-compose.yml (gọi /actuator/health)
+RUN apk add --no-cache curl
+
 # Copy the built JAR file from the builder stage
 COPY --from=builder /app/build/libs/*.jar app.jar
 
