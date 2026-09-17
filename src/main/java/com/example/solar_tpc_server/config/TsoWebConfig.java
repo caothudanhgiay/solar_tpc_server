@@ -1,7 +1,11 @@
 package com.example.solar_tpc_server.config;
 
+import com.example.solar_tpc_server.interceptor.TsoLoginBruteForceInterceptor;
+import com.example.solar_tpc_server.interceptor.TsoRateLimitInterceptor;
+import com.example.solar_tpc_server.util.TsoApiConstant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -37,5 +41,17 @@ public class TsoWebConfig implements WebMvcConfigurer {
         }
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:///" + oldUploadDirAbs.replace("\\", "/"));
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        // Chống brute-force login: khóa 1 IP nếu login SAI liên tiếp 5 lần trong 3 phút.
+        // Login đúng sẽ tự reset bộ đếm — nhiều admin dùng chung IP văn phòng không khóa lẫn nhau.
+        registry.addInterceptor(new TsoLoginBruteForceInterceptor(5, 3 * 60_000))
+                .addPathPatterns(TsoApiConstant.API_AUTH_LOGIN);
+
+        // Chống spam form gửi yêu cầu khách hàng: tối đa 3 lần gửi/1 phút/IP
+        registry.addInterceptor(new TsoRateLimitInterceptor(3, 1 * 60_000))
+                .addPathPatterns(TsoApiConstant.API_CUSTOMER_REQUESTS);
     }
 }

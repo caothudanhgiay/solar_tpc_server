@@ -40,3 +40,6 @@ AGENTS.md
 *.properties
 .env*
 application-dev.properties
+
+### Java ###
+/src/test

@@ -12,6 +12,8 @@ public final class TsoApiConstant {
     public static final String API_BASE = "/api";
 
     // Endpoints
+    public static final String API_AUTH = API_BASE + "/auth";
+    public static final String API_AUTH_LOGIN = API_AUTH + "/login";
     public static final String API_MENUS = API_BASE + "/menus";
     public static final String API_CUSTOMER_REQUESTS = API_BASE + "/customer-requests";
     public static final String API_USERS = API_BASE + "/users";

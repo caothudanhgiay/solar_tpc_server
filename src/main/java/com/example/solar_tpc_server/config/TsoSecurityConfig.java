@@ -35,6 +35,9 @@ public class TsoSecurityConfig {
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
+    @Value("${app.cors.allowed-origins:*}")
+    private String corsAllowedOrigins;
+
     @Bean
     public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
         return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
@@ -61,7 +64,7 @@ public class TsoSecurityConfig {
             .csrf(csrf -> csrf.disable()) // Tắt CSRF vì đây là API Stateless
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/auth/login").permitAll() // Đăng nhập
+                .requestMatchers(TsoApiConstant.API_AUTH_LOGIN).permitAll() // Đăng nhập
                 .requestMatchers("/api/menus").permitAll() // Cho phép truy cập công khai API lấy menu
                 .requestMatchers("/api/home").permitAll() // Cho phép truy cập công khai API tổng hợp trang chủ
                 .requestMatchers("/api/services").permitAll() // Cho phép truy cập công khai danh sách dịch vụ đang hoạt động
@@ -89,8 +92,8 @@ public class TsoSecurityConfig {
             add(TsoApiConstant.DELETE);
         }};   
         
-        // Cho phép tất cả các domain để tránh lỗi CORS khi truy cập từ máy khác hoặc qua www
-        configuration.setAllowedOriginPatterns(Arrays.asList("*")); 
+        // Đọc danh sách domain được phép từ property app.cors.allowed-origins (khai báo riêng theo từng profile dev/prod)
+        configuration.setAllowedOriginPatterns(Arrays.asList(corsAllowedOrigins.split(",")));
         configuration.setAllowedMethods(methods);
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true); // Cho phép gửi kèm cookie/credentials nếu cần

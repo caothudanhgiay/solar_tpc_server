@@ -4,6 +4,7 @@ import com.example.solar_tpc_server.dto.TsoLoginRequestDto;
 import com.example.solar_tpc_server.dto.TsoLoginResponseDto;
 import com.example.solar_tpc_server.response.TsoApiResponse;
 import com.example.solar_tpc_server.service.TsoAuthService;
+import com.example.solar_tpc_server.util.TsoApiConstant;
 import com.example.solar_tpc_server.util.TsoMessageUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping(TsoApiConstant.API_AUTH)
 @RequiredArgsConstructor
 public class TsoAuthController {
 
