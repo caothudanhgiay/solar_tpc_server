@@ -14,6 +14,8 @@ import com.example.solar_tpc_server.validation.TSOUserValidation;
 import com.example.solar_tpc_server.validation.TSOValidation;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +53,34 @@ public class TsoUserController {
                 "accesses", accesses
         );
                 
+        return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("user.fetch_success")));
+    }
+
+    @GetMapping("/page")
+    public ResponseEntity<TsoApiResponse<Object>> getUsersPage(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email,
+            Pageable pageable) {
+        Page<TsoUserDto> page = tsoUserService.getUsersPage(username, email, pageable);
+
+        var roles = java.util.Arrays.stream(com.example.solar_tpc_server.enums.TsoRoleEnum.values())
+                .map(r -> Map.of(
+                        "value", r.getRoleId(),
+                        "labelKey", r.getName()))
+                .collect(java.util.stream.Collectors.toList());
+
+        var accesses = java.util.Arrays.stream(com.example.solar_tpc_server.enums.TsoAccessEnum.values())
+                .map(a -> Map.of(
+                        "value", a.getRoleId(),
+                        "labelKey", a.getName()))
+                .collect(java.util.stream.Collectors.toList());
+
+        var data = Map.of(
+                "page", page,
+                "roles", roles,
+                "accesses", accesses
+        );
+
         return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("user.fetch_success")));
     }
 

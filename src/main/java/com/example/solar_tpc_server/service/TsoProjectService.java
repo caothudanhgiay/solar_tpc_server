@@ -50,12 +50,20 @@ public class TsoProjectService {
         return dto;
     }
 
-    public Page<TsoProjectDto> getProjectsPage(Pageable pageable) {
-        return projectRepository.findAll(pageable).map(this::mapToDto);
+    public Page<TsoProjectDto> getProjectsPage(String keyword, Pageable pageable) {
+        return projectRepository.searchProjects(keyword, pageable).map(this::mapToDto);
     }
 
     @Transactional
     public TsoProjectDto saveProjectWithFiles(TsoProjectDto dto, org.springframework.web.multipart.MultipartFile mainFile, org.springframework.web.multipart.MultipartHttpServletRequest request) throws java.io.IOException {
+        boolean isDuplicatedCode = dto.getProjectId() == null
+                ? projectRepository.existsByProjectCode(dto.getProjectCode())
+                : projectRepository.existsByProjectCodeAndProjectIdNot(dto.getProjectCode(), dto.getProjectId());
+        if (isDuplicatedCode) {
+            throw new com.example.solar_tpc_server.exception.TsoAppException(
+                    com.example.solar_tpc_server.exception.TsoErrorCode.PROJECT_CODE_DUPLICATED);
+        }
+
         TsoProject project;
         if (dto.getProjectId() != null) {
             project = projectRepository.findById(dto.getProjectId())

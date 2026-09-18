@@ -35,8 +35,10 @@ public class TsoProjectController {
     private String uploadDir;
 
     @GetMapping("/page")
-    public ResponseEntity<TsoApiResponse<Object>> getProjectsPage(Pageable pageable) {
-        Page<TsoProjectDto> page = projectService.getProjectsPage(pageable);
+    public ResponseEntity<TsoApiResponse<Object>> getProjectsPage(
+            @RequestParam(required = false) String keyword,
+            Pageable pageable) {
+        Page<TsoProjectDto> page = projectService.getProjectsPage(keyword, pageable);
         var statuses = java.util.Arrays.stream(com.example.solar_tpc_server.enums.TsoProjectStatusEnum.values())
             .map(status -> java.util.Map.of(
                 "value", status.getStatusId(),
@@ -85,6 +87,9 @@ public class TsoProjectController {
             TsoProjectDto dto = objectMapper.readValue(projectJson, TsoProjectDto.class);
             var data = projectService.saveProjectWithFiles(dto, mainFile, multipartRequest);
             return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("message.success")));
+        } catch (com.example.solar_tpc_server.exception.TsoAppException e) {
+            // Lỗi nghiệp vụ chủ động (vd trùng mã dự án) -> để TsoGlobalExceptionHandler xử lý đúng statusCode/message
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(TsoApiResponse.error(400, "Invalid data: " + e.getMessage()));
         }
@@ -104,6 +109,9 @@ public class TsoProjectController {
             dto.setProjectId(projectId);
             var data = projectService.saveProjectWithFiles(dto, mainFile, multipartRequest);
             return ResponseEntity.ok(TsoApiResponse.success(data, TsoMessageUtil.getMessage("message.success")));
+        } catch (com.example.solar_tpc_server.exception.TsoAppException e) {
+            // Lỗi nghiệp vụ chủ động (vd trùng mã dự án) -> để TsoGlobalExceptionHandler xử lý đúng statusCode/message
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(TsoApiResponse.error(400, "Invalid data: " + e.getMessage()));
         }

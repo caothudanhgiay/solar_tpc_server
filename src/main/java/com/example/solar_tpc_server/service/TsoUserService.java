@@ -10,6 +10,9 @@ import com.example.solar_tpc_server.util.TsoDateUtil;
 import com.example.solar_tpc_server.util.TsoCommonUtil;
 import com.example.solar_tpc_server.util.TsoConstant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +53,35 @@ public class TsoUserService {
                 })
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TsoUserDto> getUsersPage(String username, String email, Pageable pageable) {
+        TsoUser currentUser = getCurrentUser();
+        Long currentUserRoleId = currentUser.getRoleId();
+
+        Specification<TsoUser> spec = (root, query, cb) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+
+            if (currentUserRoleId == 2L) {
+                predicates.add(cb.or(cb.equal(root.get("roleId"), 2L), cb.equal(root.get("roleId"), 3L)));
+            } else if (currentUserRoleId == 3L) {
+                predicates.add(cb.equal(root.get("roleId"), 3L));
+            } else if (currentUserRoleId != 1L) {
+                predicates.add(cb.disjunction()); // Guest -> không thấy ai
+            }
+
+            if (TsoCommonUtil.isNotBlank(username)) {
+                predicates.add(cb.like(cb.lower(root.get("username")), "%" + username.toLowerCase() + "%"));
+            }
+            if (TsoCommonUtil.isNotBlank(email)) {
+                predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
+            }
+
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        return tsoUserRepository.findAll(spec, pageable).map(this::convertToDto);
     }
 
     @Transactional(readOnly = true)

@@ -2,12 +2,13 @@ package com.example.solar_tpc_server.repository;
 
 import com.example.solar_tpc_server.entity.TsoUser;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface TsoUserRepository extends JpaRepository<TsoUser, Long> {
+public interface TsoUserRepository extends JpaRepository<TsoUser, Long>, JpaSpecificationExecutor<TsoUser> {
     
     Optional<TsoUser> findByUsername(String username);
 
