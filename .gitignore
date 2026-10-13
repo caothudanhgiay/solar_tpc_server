@@ -43,3 +43,6 @@ application-dev.properties
 
 ### Java ###
 /src/test
+
+#claude skill
+.claude/
