@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
 import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -15,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -43,7 +47,7 @@ public final class TsoImageUtil {
             return null;
         }
         try {
-            BufferedImage source = ImageIO.read(new ByteArrayInputStream(original));
+            BufferedImage source = readSubsampled(original);
             if (source == null) return null;
 
             boolean hasAlpha = source.getColorModel().hasAlpha();
@@ -57,6 +61,29 @@ public final class TsoImageUtil {
         } catch (IOException | RuntimeException e) {
             log.warn("Image compression skipped, keep original file: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Giải mã ảnh có subsampling: ảnh rất lớn (vd 8000x6000) chỉ đọc mỗi n pixel 1 lần sao cho cạnh dài
+     * vẫn ≥ 2 * MAX_DIMENSION → giữ độ nét khi resize nhưng không phải giữ cả ảnh gốc trong heap.
+     */
+    static BufferedImage readSubsampled(byte[] data) throws IOException {
+        try (ImageInputStream iis = ImageIO.createImageInputStream(new ByteArrayInputStream(data))) {
+            if (iis == null) return null;
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+            if (!readers.hasNext()) return null;
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(iis, true, true);
+                int longSide = Math.max(reader.getWidth(0), reader.getHeight(0));
+                int step = Math.max(1, longSide / (MAX_DIMENSION * 2));
+                ImageReadParam param = reader.getDefaultReadParam();
+                param.setSourceSubsampling(step, step, 0, 0);
+                return reader.read(0, param);
+            } finally {
+                reader.dispose();
+            }
         }
     }
 
