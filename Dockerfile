@@ -10,14 +10,13 @@ COPY build.gradle settings.gradle ./
 # Give execution permission to the Gradle wrapper
 RUN chmod +x gradlew
 
-# Download dependencies (this step will be cached if build.gradle hasn't changed)
-# RUN ./gradlew dependencies --no-daemon
-
 # Copy the application source code
 COPY src src
 
-# Build the application, skipping tests
-RUN ./gradlew bootJar --no-daemon -x test
+# Build the application, skipping tests.
+# Cache mount (BuildKit) giữ Gradle distribution + dependencies trong /root/.gradle giữa các lần build
+# → không phải tải lại gradle-x.x-bin.zip (~8 phút trên VPS) mỗi khi src thay đổi.
+RUN --mount=type=cache,target=/root/.gradle ./gradlew bootJar --no-daemon -x test
 
 # Stage 2: Run the application
 FROM eclipse-temurin:21-jre-alpine
