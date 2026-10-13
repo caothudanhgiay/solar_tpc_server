@@ -8,8 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -66,12 +65,19 @@ public class TsoFileUtil {
             extension = originalFilename.substring(dotIndex);
         }
         
+        // Nén ảnh (resize + JPEG q80) trước khi lưu; định dạng không hỗ trợ hoặc nén không nhỏ hơn → giữ file gốc
+        byte[] data = file.getBytes();
+        TsoImageUtil.TsoCompressedImage compressed = TsoImageUtil.compress(data, extension);
+        if (compressed != null) {
+            data = compressed.data();
+            extension = compressed.extension();
+        }
+
         String timeSuffix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String fileName = nameWithoutExt + "_" + timeSuffix + extension;
         Path filePath = Paths.get(targetDirPath, fileName);
-        
-        // Copy the file to the target location
-        Files.copy(file.getInputStream(), filePath);
+
+        Files.write(filePath, data, StandardOpenOption.CREATE_NEW);
         
         // Return only the filename, the DB will store just this.
         // URLs will be dynamically built during DTO mapping.

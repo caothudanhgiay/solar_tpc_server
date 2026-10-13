@@ -17,6 +17,7 @@ public enum TsoErrorCode {
     USER_NOT_EXISTED(404, "error.user_not_existed"),
     INVALID_CREDENTIALS(401, "error.invalid_credentials"),
     PROJECT_CODE_DUPLICATED(409, "error.project_code_duplicated"),
+    OLD_PASSWORD_INCORRECT(400, "error.old_password_incorrect"),
 
     // Nhóm 5xx - Lỗi từ phía Server
     INTERNAL_SERVER_ERROR(500, "error.internal_server_error"),

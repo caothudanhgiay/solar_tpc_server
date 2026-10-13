@@ -22,6 +22,8 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class TsoAuthService {
 
+    private static final String DEFAULT_ROLE = "ADMIN";
+
     private final TsoUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
@@ -37,13 +39,16 @@ public class TsoAuthService {
             throw new TsoAppException(TsoErrorCode.INVALID_CREDENTIALS);
         }
 
+        // JwtClaimsSet.Builder.claim() không chấp nhận value null → fallback "ADMIN" giống response
+        Object roleClaim = user.getRoleId() != null ? user.getRoleId() : DEFAULT_ROLE;
+
         Instant now = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("solar_tpc_server")
                 .issuedAt(now)
                 .expiresAt(now.plusMillis(jwtExpirationMs))
                 .subject(user.getUsername())
-                .claim("role", user.getRoleId())
+                .claim("role", roleClaim)
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
@@ -53,7 +58,7 @@ public class TsoAuthService {
                 .token(token)
                 .userId(user.getUserId())
                 .username(user.getUsername())
-                .role(user.getRoleId() != null ? user.getRoleId().toString() : "ADMIN")
+                .role(roleClaim.toString())
                 .build();
     }
 }

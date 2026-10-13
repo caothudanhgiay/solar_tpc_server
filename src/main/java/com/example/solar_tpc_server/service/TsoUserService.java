@@ -178,7 +178,7 @@ public class TsoUserService {
                 .orElseThrow(() -> new TsoAppException(TsoErrorCode.USER_NOT_EXISTED));
 
         if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
-            throw new RuntimeException("Mật khẩu cũ không chính xác"); // Or a specific exception
+            throw new TsoAppException(TsoErrorCode.OLD_PASSWORD_INCORRECT);
         }
 
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));

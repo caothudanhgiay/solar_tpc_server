@@ -132,7 +132,7 @@ public class TsoUserController {
     public ResponseEntity<TsoApiResponse<Object>> changePassword(@PathVariable Long id,
             @RequestBody TsoChangePasswordDto dto) {
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-            Map<String, String> errors = Map.of("confirmPassword", "Mật khẩu xác nhận không khớp");
+            Map<String, String> errors = Map.of("confirmPassword", TsoMessageUtil.getMessage("validation.password.mismatch"));
             return ResponseEntity.status(400).body(TsoApiResponse.<Object>builder()
                     .statusCode(400)
                     .message(TsoMessageUtil.getMessage("error.invalid_input"))
@@ -148,7 +148,7 @@ public class TsoUserController {
                     .build());
         }
         tsoUserService.changePassword(id, dto);
-        return ResponseEntity.ok(TsoApiResponse.success(null, "Thay đổi mật khẩu thành công"));
+        return ResponseEntity.ok(TsoApiResponse.success(null, TsoMessageUtil.getMessage("user.change_password_success")));
     }
 
     /**
