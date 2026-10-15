@@ -42,7 +42,7 @@ public class TsoProjectService {
 
     public TsoProjectDto getProjectById(Long projectId) {
         TsoProject project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new com.example.solar_tpc_server.exception.TsoAppException(com.example.solar_tpc_server.exception.TsoErrorCode.NOT_FOUND));
         TsoProjectDto dto = mapToDto(project);
         
         List<TsoProjectDetail> details = projectDetailRepository.findByProjectId(projectId);
@@ -67,7 +67,7 @@ public class TsoProjectService {
         TsoProject project;
         if (dto.getProjectId() != null) {
             project = projectRepository.findById(dto.getProjectId())
-                    .orElseThrow(() -> new RuntimeException("Project not found"));
+                    .orElseThrow(() -> new com.example.solar_tpc_server.exception.TsoAppException(com.example.solar_tpc_server.exception.TsoErrorCode.NOT_FOUND));
         } else {
             project = new TsoProject();
         }
@@ -134,7 +134,7 @@ public class TsoProjectService {
         TsoProject project;
         if (dto.getProjectId() != null) {
             project = projectRepository.findById(dto.getProjectId())
-                    .orElseThrow(() -> new RuntimeException("Project not found"));
+                    .orElseThrow(() -> new com.example.solar_tpc_server.exception.TsoAppException(com.example.solar_tpc_server.exception.TsoErrorCode.NOT_FOUND));
         } else {
             project = new TsoProject();
         }

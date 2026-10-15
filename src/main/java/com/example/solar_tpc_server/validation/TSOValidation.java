@@ -13,8 +13,8 @@ public class TSOValidation {
     private static final String NUMBER_REGEX = "^-?\\d+(\\.\\d+)?$";
     private static final Pattern NUMBER_PATTERN = Pattern.compile(NUMBER_REGEX);
 
-    // Password must contain at least one digit, one uppercase letter, one special character, and be at least 6 characters long
-    private static final String PASSWORD_REGEX = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{6,}$";
+    // Password must contain at least one digit, one uppercase letter, one special character, and be at least 10 characters long
+    private static final String PASSWORD_REGEX = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{10,}$";
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(PASSWORD_REGEX);
 
     public static boolean isRequired(String value) {
